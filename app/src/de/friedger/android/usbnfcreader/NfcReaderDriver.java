@@ -152,16 +152,18 @@ public class NfcReaderDriver implements Runnable {
 	
 	private String bufferToString(byte[] buffer, int length) {
 
+		length = Math.max(length, 0);
+		
 		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < buffer.length; i++) {
+		for (int i = 0; i < length; i++) {
 			byte b = buffer[i];
 			sb.append(String.valueOf(b));
 		}
 		sb.append("\n");
 		
-		    char[] hexChars = new char[buffer.length * 2];
+		    char[] hexChars = new char[length * 2];
 		    int v;
-		    for ( int j = 0; j < buffer.length; j++ ) {
+		    for ( int j = 0; j < length; j++ ) {
 		        v = buffer[j] & 0xFF;
 		        hexChars[j * 2] = hexArray[v >>> 4];
 		        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
@@ -175,16 +177,22 @@ public class NfcReaderDriver implements Runnable {
 	private void sendGetFirmewareVersion() {
 		synchronized (this) {
 			if (mConnection != null) {
-				byte[] message = new byte[] { 0, 0, (byte)0xFF, 2, (byte)0xFE, (byte)0xD4, 2, (byte)0x2A, 0 };
+				byte[] message = new byte[] { 0, 0, 0, 0, 0, 0, (byte)0xFF, 2, (byte)0xFE, (byte)0xD4, 2, (byte)0x2A, 0 ,0 , 0 ,0 };
 				// Send command via a control request on endpoint zero
 				int lengthOut = mConnection.bulkTransfer(mOut, message, message.length, 0);
 				Log.d(TAG, "lengthOut: " + lengthOut);
+				Log.d(TAG, bufferToString(message, lengthOut));
 				
 				byte[] buffer = new byte[256];
 				int lengthIn = mConnection.bulkTransfer(mIn, buffer, buffer.length, 0);
 				Log.d(TAG, "lengthIn: " + lengthIn);
 				Log.d(TAG, bufferToString(buffer, lengthIn));
-				
+
+				buffer = new byte[256];
+				lengthIn = mConnection.bulkTransfer(mIn, buffer, buffer.length, 0);
+				Log.d(TAG, "lengthIn: " + lengthIn);
+				Log.d(TAG, bufferToString(buffer, lengthIn));
+
 //				mConnection.controlTransfer(0x21, 0x9, 0x200, 0, message,
 //						message.length, 0);
 //				mConnection.bulkTransfer(mIn, message, message.length, 0);
@@ -200,7 +208,7 @@ public class NfcReaderDriver implements Runnable {
 		request.initialize(mConnection, mInterrupt);
 		while (true) {
 			// queue a request on the interrupt endpoint
-			request.queue(buffer, 265);
+			//request.queue(buffer, 265);
 
 			sendGetFirmewareVersion();
 
