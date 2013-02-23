@@ -147,6 +147,11 @@ public class NfcReaderDriver implements Runnable {
     final char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 
 	private String bufferToString(byte[] buffer) {
+		return bufferToString(buffer, buffer.length);
+	}
+	
+	private String bufferToString(byte[] buffer, int length) {
+
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < buffer.length; i++) {
 			byte b = buffer[i];
@@ -170,14 +175,15 @@ public class NfcReaderDriver implements Runnable {
 	private void sendGetFirmewareVersion() {
 		synchronized (this) {
 			if (mConnection != null) {
-				byte[] message = new byte[] { 0, (byte)0xFF, 2, (byte)0xFE, (byte)0xD4, 2, (byte)0x2A };
+				byte[] message = new byte[] { 0, 0, (byte)0xFF, 2, (byte)0xFE, (byte)0xD4, 2, (byte)0x2A, 0 };
 				// Send command via a control request on endpoint zero
-				mConnection.bulkTransfer(mOut, message, message.length, 0);
+				int lengthOut = mConnection.bulkTransfer(mOut, message, message.length, 0);
+				Log.d(TAG, "lengthOut: " + lengthOut);
 				
 				byte[] buffer = new byte[256];
-				int length = mConnection.bulkTransfer(mIn, buffer, buffer.length, 0);
-				Log.d(TAG, "" + length);
-				Log.d(TAG, bufferToString(buffer));
+				int lengthIn = mConnection.bulkTransfer(mIn, buffer, buffer.length, 0);
+				Log.d(TAG, "lengthIn: " + lengthIn);
+				Log.d(TAG, bufferToString(buffer, lengthIn));
 				
 //				mConnection.controlTransfer(0x21, 0x9, 0x200, 0, message,
 //						message.length, 0);
