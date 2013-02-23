@@ -173,12 +173,15 @@ public class NfcReaderDriver implements Runnable {
 				byte[] message = new byte[] { 0, 0, 0xF, 0xF, 0, 2, 0xF, 0xE,
 						0xD, 0x4, 0, 2, 2, 0xA };
 				// Send command via a control request on endpoint zero
-//				mConnection.bulkTransfer(mOut, message, message.length, 0);
-//				mConnection.bulkTransfer(mIn, message, message.length, 0);
+				mConnection.bulkTransfer(mOut, message, message.length, 0);
 				
-				mConnection.controlTransfer(0x21, 0x9, 0x200, 0, message,
-						message.length, 0);
-				mConnection.bulkTransfer(mIn, message, message.length, 0);
+				byte[] buffer = new byte[256];
+				mConnection.bulkTransfer(mIn, buffer, buffer.length, 0);
+				Log.d(TAG, bufferToString(buffer));
+				
+//				mConnection.controlTransfer(0x21, 0x9, 0x200, 0, message,
+//						message.length, 0);
+//				mConnection.bulkTransfer(mIn, message, message.length, 0);
 
 			}
 		}
