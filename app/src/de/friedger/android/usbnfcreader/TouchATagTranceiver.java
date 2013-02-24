@@ -42,6 +42,7 @@ public class TouchATagTranceiver {
 	private int sendRequest(byte[] message) {
 		byte[] touchatagmsgPrefix = { 0x6f, 0x07, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, (byte)0xff, 0x00,
 				0x00, 0x00 };
+		touchatagmsgPrefix[1] = (byte)(4 + 1 + message.length);
 		ByteBuffer msgToSend = ByteBuffer.allocate(touchatagmsgPrefix.length + 1 + message.length);
 		msgToSend.put(touchatagmsgPrefix);
 		msgToSend.put((byte)message.length);
