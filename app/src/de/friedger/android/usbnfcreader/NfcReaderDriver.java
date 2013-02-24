@@ -177,26 +177,17 @@ public class NfcReaderDriver implements Runnable {
 	private void sendGetFirmewareVersion() {
 		synchronized (this) {
 			if (mConnection != null) {
-				byte[] message = new byte[] { 0, 0, 0, 0, 0, 0, (byte)0xFF, 2, (byte)0xFE, (byte)0xD4, 2, (byte)0x2A, 0 ,0 , 0 ,0 };
-				// Send command via a control request on endpoint zero
-				int lengthOut = mConnection.bulkTransfer(mOut, message, message.length, 0);
-				Log.d(TAG, "lengthOut: " + lengthOut);
-				Log.d(TAG, bufferToString(message, lengthOut));
+				TouchATagTranceiver tranceiver = new TouchATagTranceiver(mConnection, mIn, mOut);
+				byte[] response = tranceiver.tranceive(new byte[] {(byte)0xd4, 0x02});
+				Log.d(TAG, "lengthIn: " + response.length);
+				Log.d(TAG, Utils.bufferToString(response));
 				
-				byte[] buffer = new byte[256];
-				int lengthIn = mConnection.bulkTransfer(mIn, buffer, buffer.length, 0);
-				Log.d(TAG, "lengthIn: " + lengthIn);
-				Log.d(TAG, bufferToString(buffer, lengthIn));
+				int ic = response[2];
+				int ver = response[3];
+				int rev = response[4];
+				int support = response[5];
 
-				buffer = new byte[256];
-				lengthIn = mConnection.bulkTransfer(mIn, buffer, buffer.length, 0);
-				Log.d(TAG, "lengthIn: " + lengthIn);
-				Log.d(TAG, bufferToString(buffer, lengthIn));
-
-//				mConnection.controlTransfer(0x21, 0x9, 0x200, 0, message,
-//						message.length, 0);
-//				mConnection.bulkTransfer(mIn, message, message.length, 0);
-
+				Log.d(TAG, "IC "+Integer.toHexString(ic)+" Version: "+ver+"."+rev+" Support: "+support);
 			}
 		}
 	}
