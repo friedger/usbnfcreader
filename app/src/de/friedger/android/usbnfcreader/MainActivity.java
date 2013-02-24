@@ -49,6 +49,18 @@ public class MainActivity extends Activity implements NfcReaderListener {
 		mTextView.setText("disconnected");
 	}
 	
+	
+	@Override
+	public void onGetFirmwareVersion(final String ic, final int ver, final int rev, final int support) {
+		runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				mTextView.setText("IC "+ic+" Version: "+ver+"."+rev+" Support: "+support);		
+			}
+		});
+	}
+	
 	public void onButtonClick(View target){
 		if (mNfcDriver != null){
 			String result = mNfcDriver.readTag();

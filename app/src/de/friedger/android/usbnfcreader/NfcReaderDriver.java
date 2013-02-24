@@ -188,6 +188,7 @@ public class NfcReaderDriver implements Runnable {
 				int support = response[5];
 
 				Log.d(TAG, "IC "+Integer.toHexString(ic)+" Version: "+ver+"."+rev+" Support: "+support);
+				mListener.onGetFirmwareVersion(Integer.toHexString(ic), ver, rev, support);
 			}
 		}
 	}
