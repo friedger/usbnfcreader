@@ -173,6 +173,29 @@ public class NfcReaderDriver implements Runnable {
 		return sb.toString();
 	}
 
+	private void inListPassiveTarget() {
+		TouchATagTranceiver tranceiver = new TouchATagTranceiver(mConnection, mIn, mOut);
+		byte[] response = tranceiver.tranceive(new byte[] { (byte)0xd4, 0x4a, 0x01, 0x00 });
+		Log.d(TAG, "lengthIn: " + response.length);
+		Log.d(TAG, Utils.bufferToString(response));
+		int targets = response[2];
+		if (targets >= 1) {
+			int nfcidLength = response[7];
+			byte[] id = new byte[nfcidLength];
+			System.arraycopy(response, 8, id, 0, nfcidLength);
+			Log.d(TAG, "ID: " + Utils.bufferToString(id));
+			inDeselect();
+		}
+	}
+
+	private void inDeselect() {
+		TouchATagTranceiver tranceiver = new TouchATagTranceiver(mConnection, mIn, mOut);
+		byte[] response = tranceiver.tranceive(new byte[] { (byte)0xd4, 0x44, 0x01});
+//		Log.d(TAG, "lengthIn: " + response.length);
+//		Log.d(TAG, Utils.bufferToString(response));
+	}
+	
+
 	
 	private void sendGetFirmewareVersion() {
 		synchronized (this) {
@@ -196,26 +219,17 @@ public class NfcReaderDriver implements Runnable {
 	@Override
 	public void run() {
 		ByteBuffer buffer = ByteBuffer.allocate(265); 		
-		UsbRequest request = new UsbRequest();
-		request.initialize(mConnection, mInterrupt);
 		while (true) {
 			// queue a request on the interrupt endpoint
 			//request.queue(buffer, 265);
 
-			sendGetFirmewareVersion();
+			inListPassiveTarget();
 
 			// wait for status event
-			if (mConnection.requestWait() == request) {
-				Log.d(TAG, "got response ");
-				Log.d(TAG, bufferToString(buffer.array()));
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
 				}
-			} else {
-				Log.e(TAG, "requestWait failed, exiting");
-				break;
-			}
 		}
 	}
 
