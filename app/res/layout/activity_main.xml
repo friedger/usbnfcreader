@@ -19,6 +19,6 @@
         android:layout_below="@+id/textview"
         android:layout_centerHorizontal="true"
         android:onClick="onButtonClick"
-        android:text="Button" />
+        android:text="Close app" />
 
 </RelativeLayout>

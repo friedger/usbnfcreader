@@ -2,23 +2,28 @@ package de.friedger.android.usbnfcreader.io;
 
 import java.nio.ByteBuffer;
 
+import de.friedger.android.usbnfcreader.Constants;
+
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
 import android.util.Log;
 
-public class TouchATagTranceiver {
+public class TouchATagTranceiver implements Tranceiver {
 
-	private final String TAG = "UsbNfcReader";
 	private UsbDeviceConnection connection;
 	private UsbEndpoint in;
 	private UsbEndpoint out;
+	private UsbInterface usbInterface;
 
-	public TouchATagTranceiver(UsbDeviceConnection connection, UsbEndpoint in, UsbEndpoint out) {
+	public TouchATagTranceiver(UsbDeviceConnection connection, UsbInterface usbInterface) {
 		this.connection = connection;
-		this.in = in;
-		this.out = out;
+		this.usbInterface = usbInterface;
+		out = usbInterface.getEndpoint(1);
+		in = usbInterface.getEndpoint(2);
 	}
 
+	@Override
 	public byte[] tranceive(byte[] message) {
 		int exptectedResponseSize = sendRequest(message);
 		return getResponse(exptectedResponseSize);
@@ -56,13 +61,18 @@ public class TouchATagTranceiver {
 	}
 
 	private byte[] usbTranceive(byte[] msgToSend) {
-		Log.d(TAG, "USB-Sending: "+Utils.bufferToString(msgToSend));
+		Log.d(Constants.TAG, "USB-Sending: "+Utils.bufferToString(msgToSend));
 		connection.bulkTransfer(out, msgToSend, msgToSend.length, 0);
 		byte[] buffer = new byte[256];
 		int lengthReceived = connection.bulkTransfer(in, buffer, buffer.length, 0);
 		byte[] result = new byte[lengthReceived];
 		System.arraycopy(buffer, 0, result, 0, lengthReceived);
-		Log.d(TAG, "USB-Received: "+Utils.bufferToString(result));
+		Log.d(Constants.TAG, "USB-Received: "+Utils.bufferToString(result));
 		return result;
+	}
+
+	@Override
+	public void releaseDevice() {
+		connection.releaseInterface(usbInterface);
 	}
 }
