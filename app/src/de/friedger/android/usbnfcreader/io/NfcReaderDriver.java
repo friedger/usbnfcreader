@@ -1,6 +1,5 @@
-package de.friedger.android.usbnfcreader;
+package de.friedger.android.usbnfcreader.io;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 
 import android.app.PendingIntent;
@@ -14,7 +13,6 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
-import android.hardware.usb.UsbRequest;
 import android.os.Parcelable;
 import android.util.Log;
 import android.widget.Toast;
@@ -56,6 +54,7 @@ public class NfcReaderDriver implements Runnable {
 	private UsbDeviceConnection mConnection;
 	private UsbEndpoint mInterrupt;
 	private UsbEndpoint mOut;
+	private boolean mStopped;
 
 	public NfcReaderDriver(Context context, NfcReaderListener listener) {
 		mUsb = (UsbManager) context.getSystemService(Context.USB_SERVICE);
@@ -133,49 +132,11 @@ public class NfcReaderDriver implements Runnable {
 
 	}
 
-	public String readTag() {
-		Log.d(TAG, "reading");
-		byte[] buffer = new byte[265];
-		mConnection.bulkTransfer(mIn, buffer, 265, 0);
-
-		String result = bufferToString(buffer);
-		Log.d(TAG, result);
-		byte type = buffer[0];
-		return result;
-	}
-
-    final char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
-
-	private String bufferToString(byte[] buffer) {
-		return bufferToString(buffer, buffer.length);
-	}
-	
-	private String bufferToString(byte[] buffer, int length) {
-
-		length = Math.max(length, 0);
-		
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < length; i++) {
-			byte b = buffer[i];
-			sb.append(String.valueOf(b));
-		}
-		sb.append("\n");
-		
-		    char[] hexChars = new char[length * 2];
-		    int v;
-		    for ( int j = 0; j < length; j++ ) {
-		        v = buffer[j] & 0xFF;
-		        hexChars[j * 2] = hexArray[v >>> 4];
-		        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-		    }
-		    sb.append(hexChars);		    
-		
-		return sb.toString();
-	}
-
 	private void inListPassiveTarget() {
-		TouchATagTranceiver tranceiver = new TouchATagTranceiver(mConnection, mIn, mOut);
-		byte[] response = tranceiver.tranceive(new byte[] { (byte)0xd4, 0x4a, 0x01, 0x00 });
+		TouchATagTranceiver tranceiver = new TouchATagTranceiver(mConnection,
+				mIn, mOut);
+		byte[] response = tranceiver.tranceive(new byte[] { (byte) 0xd4, 0x4a,
+				0x01, 0x00 });
 		Log.d(TAG, "lengthIn: " + response.length);
 		Log.d(TAG, Utils.bufferToString(response));
 		int targets = response[2];
@@ -185,51 +146,59 @@ public class NfcReaderDriver implements Runnable {
 			System.arraycopy(response, 8, id, 0, nfcidLength);
 			Log.d(TAG, "ID: " + Utils.bufferToString(id));
 			inDeselect();
+			mListener.onTag(Utils.bufferToString(id), System.currentTimeMillis());
 		}
 	}
 
 	private void inDeselect() {
-		TouchATagTranceiver tranceiver = new TouchATagTranceiver(mConnection, mIn, mOut);
-		byte[] response = tranceiver.tranceive(new byte[] { (byte)0xd4, 0x44, 0x01});
-//		Log.d(TAG, "lengthIn: " + response.length);
-//		Log.d(TAG, Utils.bufferToString(response));
+		TouchATagTranceiver tranceiver = new TouchATagTranceiver(mConnection,
+				mIn, mOut);
+		byte[] response = tranceiver.tranceive(new byte[] { (byte) 0xd4, 0x44,
+				0x01 });
+		// Log.d(TAG, "lengthIn: " + response.length);
+		// Log.d(TAG, Utils.bufferToString(response));
 	}
-	
 
-	
-	private void sendGetFirmewareVersion() {
-		synchronized (this) {
-			if (mConnection != null) {
-				TouchATagTranceiver tranceiver = new TouchATagTranceiver(mConnection, mIn, mOut);
-				byte[] response = tranceiver.tranceive(new byte[] {(byte)0xd4, 0x02});
-				Log.d(TAG, "lengthIn: " + response.length);
-				Log.d(TAG, Utils.bufferToString(response));
-				
-				int ic = response[2];
-				int ver = response[3];
-				int rev = response[4];
-				int support = response[5];
+	private void getFirmwareVersion() {
+		if (mConnection != null) {
+			TouchATagTranceiver tranceiver = new TouchATagTranceiver(
+					mConnection, mIn, mOut);
+			byte[] response = tranceiver.tranceive(new byte[] { (byte) 0xd4,
+					0x02 });
+			Log.d(TAG, "lengthIn: " + response.length);
+			Log.d(TAG, Utils.bufferToString(response));
 
-				Log.d(TAG, "IC "+Integer.toHexString(ic)+" Version: "+ver+"."+rev+" Support: "+support);
-			}
+			int ic = response[2];
+			int ver = response[3];
+			int rev = response[4];
+			int support = response[5];
+
+			Log.d(TAG, "IC " + Integer.toHexString(ic) + " Version: " + ver
+					+ "." + rev + " Support: " + support);
+			mListener.onGetFirmwareVersion(Integer.toHexString(ic), ver, rev,
+					support);
 		}
 	}
 
 	@Override
 	public void run() {
-		ByteBuffer buffer = ByteBuffer.allocate(265); 		
-		while (true) {
-			// queue a request on the interrupt endpoint
-			//request.queue(buffer, 265);
+
+		getFirmwareVersion();
+
+		mStopped = false;
+		
+		while (!mStopped) {
 
 			inListPassiveTarget();
 
-			// wait for status event
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-				}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+			}
 		}
 	}
 
+	public void stop() {
+		mStopped = true;
+	}
 }

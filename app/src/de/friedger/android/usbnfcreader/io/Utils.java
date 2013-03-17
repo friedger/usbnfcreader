@@ -1,4 +1,4 @@
-package de.friedger.android.usbnfcreader;
+package de.friedger.android.usbnfcreader.io;
 
 public class Utils {
 
