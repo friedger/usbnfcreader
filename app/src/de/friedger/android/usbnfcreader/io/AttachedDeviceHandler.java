@@ -85,15 +85,25 @@ public class AttachedDeviceHandler {
 			if (!connection.claimInterface(usbInterface, true)) {
 				throw new UsbConnectionException("no exclusive rights");
 			}
-			
 			ConnectedUsbDevice connectedUsbDevice = new ConnectedUsbDevice(connection, usbInterface);
-			
-			// TODO identify other devices
-//			TouchATagTranceiver tranceiver = new TouchATagTranceiver(connection, usbInterface);
-			Acr122Tranceiver tranceiver = new Acr122Tranceiver(connectedUsbDevice);
-			UsbCommunication usbCommunication = new UsbCommunication(tranceiver);
-			voteManager.addNfcReader(usbCommunication);
-			Log.d(Constants.TAG, "connected");
+			byte[] rawDescriptors = connection.getRawDescriptors();
+			byte deviceId = rawDescriptors[65];
+			Log.d(Constants.TAG, "device: " + Integer.toHexString(deviceId));
+			Tranceiver tranceiver = null;
+			if (deviceId == 0) {
+				tranceiver = new TouchATagTranceiver(connectedUsbDevice);
+			}
+			else if (deviceId == 1) {
+				tranceiver = new Acr122Tranceiver(connectedUsbDevice);
+			}
+			if (tranceiver != null) {
+				UsbCommunication usbCommunication = new UsbCommunication(tranceiver);
+				voteManager.addNfcReader(usbCommunication);
+				Log.d(Constants.TAG, "connected");
+			}
+			else
+				Log.d(Constants.TAG, "NO handler found for deviceID "+deviceId);
+				
 		}
 		else {
 			throw new UsbConnectionException("null connection received");

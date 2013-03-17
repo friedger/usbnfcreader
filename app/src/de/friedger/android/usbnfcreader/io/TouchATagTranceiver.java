@@ -3,35 +3,12 @@ package de.friedger.android.usbnfcreader.io;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import de.friedger.android.usbnfcreader.Constants;
+public class TouchATagTranceiver extends AbstractTranceiver {
 
-import android.hardware.usb.UsbDeviceConnection;
-import android.hardware.usb.UsbEndpoint;
-import android.hardware.usb.UsbInterface;
-import android.util.Log;
-
-public class TouchATagTranceiver implements Tranceiver {
-
-	private UsbDeviceConnection connection;
-	private UsbEndpoint in;
-	private UsbEndpoint out;
-	private UsbInterface usbInterface;
-
-	public TouchATagTranceiver(UsbDeviceConnection connection, UsbInterface usbInterface) {
-		this.connection = connection;
-		this.usbInterface = usbInterface;
-		out = usbInterface.getEndpoint(1);
-		in = usbInterface.getEndpoint(2);
-		cleanUpInput();
-	}
-
-	private void cleanUpInput() {
-		byte buffer[] = new byte[512];
-		int lengthReceived = 0;
-		do {
-			lengthReceived = connection.bulkTransfer(in, buffer, buffer.length, 100);
-			Log.d(Constants.TAG, "Cleanup " + lengthReceived + " bytes");
-		} while (lengthReceived > 0);
+	public TouchATagTranceiver(ConnectedUsbDevice connectedUsbDevice) {
+		super(connectedUsbDevice, (byte)0x6f);
+		powerOn();
+		getFirmware();
 	}
 
 	@Override
@@ -71,37 +48,4 @@ public class TouchATagTranceiver implements Tranceiver {
 			throw new IOException("Cannot parse response [" + Utils.bufferToString(response) + "]");
 	}
 
-	private byte[] usbTranceive(byte[] msgToSend) throws IOException {
-		Log.d(Constants.TAG, "USB-Sending: " + Utils.bufferToString(msgToSend));
-		int outputResult = connection.bulkTransfer(out, msgToSend, msgToSend.length, 1000);
-		if (outputResult >= 0) {
-			byte[] buffer = new byte[256];
-			Log.d(Constants.TAG, "Waiting for response...");
-			int lengthReceived = 0;
-			do {
-				lengthReceived = connection.bulkTransfer(in, buffer, buffer.length, 100);
-				try {
-					Thread.sleep(50);
-				}
-				catch (InterruptedException e) {
-					throw new IOException(e);
-				}
-			} while (lengthReceived == -1);
-			byte[] result = new byte[lengthReceived];
-			System.arraycopy(buffer, 0, result, 0, lengthReceived);
-			Log.d(Constants.TAG, "USB-Received: " + Utils.bufferToString(result));
-			return result;
-		}
-		else {
-			throw new IOException("Timeout sending data. Error: "+outputResult);
-		}
-	}
-
-	@Override
-	public void releaseDevice() {
-		Log.d(Constants.TAG, "releasing usb device");
-
-		connection.releaseInterface(usbInterface);
-		connection.close();
-	}
 }
