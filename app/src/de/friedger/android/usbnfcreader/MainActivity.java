@@ -71,9 +71,9 @@ public class MainActivity extends Activity implements VoteListener {
 	
 	@Override
 	protected void onStop() {
-		voteManager.stop();
-		attachedDeviceHandler.onStop();
 		super.onStop();
+		attachedDeviceHandler.onStop();
+		voteManager.onStop();
 	}
 	
 	public void beepTwice(){

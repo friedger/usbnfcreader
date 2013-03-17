@@ -1,5 +1,7 @@
 package de.friedger.android.usbnfcreader.io;
 
+import java.io.IOException;
+
 import android.util.Log;
 import de.friedger.android.usbnfcreader.Constants;
 
@@ -17,7 +19,7 @@ public class UsbCommunication implements Runnable {
 		this.tagListener = tagListener;
 	}
 
-	private void inListPassiveTarget() {
+	private void inListPassiveTarget() throws IOException {
 		byte[] response = tranceiver.tranceive(new byte[] { (byte)0xd4, 0x4a, 0x01, 0x00 });
 		Log.d(Constants.TAG, "lengthIn: " + response.length);
 		Log.d(Constants.TAG, Utils.bufferToString(response));
@@ -33,13 +35,13 @@ public class UsbCommunication implements Runnable {
 		}
 	}
 
-	private void inDeselect() {
+	private void inDeselect() throws IOException {
 		tranceiver.tranceive(new byte[] { (byte)0xd4, 0x44, 0x01 });
 		// Log.d(TAG, "lengthIn: " + response.length);
 		// Log.d(TAG, Utils.bufferToString(response));
 	}
 
-	private void getFirmwareVersion() {
+	private void getFirmwareVersion() throws IOException {
 		byte[] response = tranceiver.tranceive(new byte[] { (byte)0xd4, 0x02 });
 		Log.d(Constants.TAG, "lengthIn: " + response.length);
 		Log.d(Constants.TAG, Utils.bufferToString(response));
@@ -54,14 +56,36 @@ public class UsbCommunication implements Runnable {
 
 	@Override
 	public void run() {
-		while (!Thread.interrupted()) {
-			inListPassiveTarget();
-			try {
-				Thread.sleep(100);
+		try {
+			getFirmwareVersion();
+			while (!Thread.interrupted()) {
+				try {
+					inListPassiveTarget();
+				}
+				catch (IOException e) {
+					if (e.getCause() != null && e.getCause() instanceof InterruptedException) {
+						Log.d(Constants.TAG, "usb thread interrupted");
+					}
+					else {
+						e.printStackTrace();
+						if (tagListener != null)
+							tagListener.onError(e.getMessage());
+					}
+					break;
+				}
+				try {
+					Thread.sleep(10);
+				}
+				catch (InterruptedException e) {
+					Log.d(Constants.TAG, "usb thread interrupted");
+					break;
+				}
 			}
-			catch (InterruptedException e) {
-				Log.d(Constants.TAG, "usb thread interrupted");
-			}
+		}
+		catch (IOException e) {
+			if (tagListener != null)
+				tagListener.onError(e.getMessage());
+			e.printStackTrace();
 		}
 		tranceiver.releaseDevice();
 		Log.d(Constants.TAG, "usb device released");

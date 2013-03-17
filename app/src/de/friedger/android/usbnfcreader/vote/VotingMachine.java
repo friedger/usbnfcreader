@@ -16,4 +16,9 @@ public class VotingMachine implements TagListener {
 	public void onTag(String tagId) {
 		voteManager.submitVote(voteType, tagId);
 	}
+
+	@Override
+	public void onError(String message) {
+		// TODO show error
+	}
 }

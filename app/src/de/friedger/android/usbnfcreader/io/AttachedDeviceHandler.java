@@ -85,8 +85,12 @@ public class AttachedDeviceHandler {
 			if (!connection.claimInterface(usbInterface, true)) {
 				throw new UsbConnectionException("no exclusive rights");
 			}
+			
+			ConnectedUsbDevice connectedUsbDevice = new ConnectedUsbDevice(connection, usbInterface);
+			
 			// TODO identify other devices
-			TouchATagTranceiver tranceiver = new TouchATagTranceiver(connection, usbInterface);
+//			TouchATagTranceiver tranceiver = new TouchATagTranceiver(connection, usbInterface);
+			Acr122Tranceiver tranceiver = new Acr122Tranceiver(connectedUsbDevice);
 			UsbCommunication usbCommunication = new UsbCommunication(tranceiver);
 			voteManager.addNfcReader(usbCommunication);
 			Log.d(Constants.TAG, "connected");

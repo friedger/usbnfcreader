@@ -31,14 +31,14 @@ public class VoteManager {
 		}
 	}
 
-	public void stop() {
+	public void onStop() {
 		for (Thread thread : votingMaschines.values()) {
 			thread.interrupt();
 		}
 	}
 
 	public void submitVote(VoteType vote, String id) {
-		Log.d(Constants.TAG, "new vote: " + vote + " with ID: " + id);
+		Log.d("VOTE", "new vote: " + vote + " with ID: " + id);
 		if (voteListener != null) {
 			voteListener.onVote(new Vote(vote, id, roomId, System.currentTimeMillis()));
 		}
