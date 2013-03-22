@@ -53,7 +53,8 @@ public class AttachedDeviceHandler {
 			UsbDevice device = e.getValue();
 			int vendorId = device.getVendorId();
 			int productId = device.getProductId();
-			if (vendorId == 0x072f && productId == 0x2200) {
+			Log.d(Constants.TAG, Integer.toHexString(vendorId) + " " +  Integer.toHexString(productId) );
+			if (vendorId == 0x072f && (productId == 0x2200 || productId == 0x90cc)) {
 				connectWithPermission(device);
 				found = true;
 			}
@@ -90,8 +91,8 @@ public class AttachedDeviceHandler {
 			byte deviceId = rawDescriptors[65];
 			Log.d(Constants.TAG, "device: " + Integer.toHexString(deviceId));
 			Tranceiver tranceiver = null;
-			if (deviceId == 0) {
-				tranceiver = new TouchATagTranceiver(connectedUsbDevice);
+			if ( deviceId == 0) {
+				tranceiver = new TouchATagTranceiver(connectedUsbDevice);				
 			}
 			else if (deviceId == 1) {
 				tranceiver = new Acr122Tranceiver(connectedUsbDevice);

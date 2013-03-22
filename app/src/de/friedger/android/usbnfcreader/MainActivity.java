@@ -54,7 +54,6 @@ public class MainActivity extends Activity implements VoteListener {
 			@Override
 			public void run() {
 				mTextView.setText("Vote: "+vote.getVoteType()+" Id: "+vote.getId()+" Room: "+vote.getRoomId());
-				beepTwice();
 			}
 		});
 	}

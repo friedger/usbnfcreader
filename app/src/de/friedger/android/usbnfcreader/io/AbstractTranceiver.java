@@ -55,7 +55,7 @@ public abstract class AbstractTranceiver implements Tranceiver {
 
 	protected byte[] usbTranceive(byte[] msgToSend) throws IOException {
 		Log.d(Constants.TAG, "USB-Sending: " + Utils.bufferToString(msgToSend));
-		int outputResult = connectedUsbDevice.send(msgToSend, 1000);
+		int outputResult = connectedUsbDevice.send(msgToSend, -1);
 		if (outputResult >= 0) {
 			byte[] buffer = new byte[256];
 			Log.d(Constants.TAG, "Waiting for response...");
