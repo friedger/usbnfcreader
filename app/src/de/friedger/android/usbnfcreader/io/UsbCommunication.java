@@ -9,7 +9,10 @@ public class UsbCommunication implements Runnable {
 
 	private Tranceiver tranceiver;
 	private TagListener tagListener;
-	private NfcReaderListener nfcReaderListener;
+	private int mIc;
+	private int mVersion;
+	private int mRevision;
+	private int mSupport;
 
 	public UsbCommunication(Tranceiver tranceiver) {
 		this.tranceiver = tranceiver;
@@ -45,13 +48,11 @@ public class UsbCommunication implements Runnable {
 		byte[] response = tranceiver.tranceive(new byte[] { (byte)0xd4, 0x02 });
 		Log.d(Constants.TAG, "lengthIn: " + response.length);
 		Log.d(Constants.TAG, Utils.bufferToString(response));
-		int ic = response[2];
-		int ver = response[3];
-		int rev = response[4];
-		int support = response[5];
-		Log.d(Constants.TAG, "IC " + Integer.toHexString(ic) + " Version: " + ver + "." + rev + " Support: " + support);
-		if (nfcReaderListener != null)
-			nfcReaderListener.onGetFirmwareVersion(Integer.toHexString(ic), ver, rev, support);
+		mIc = response[2];
+		mVersion = response[3];
+		mRevision = response[4];
+		mSupport = response[5];
+		Log.d(Constants.TAG, "IC " + Integer.toHexString(mIc) + " Version: " + mVersion + "." + mRevision + " Support: " + mSupport);
 	}
 
 	@Override
