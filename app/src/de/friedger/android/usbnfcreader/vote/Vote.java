@@ -2,6 +2,12 @@ package de.friedger.android.usbnfcreader.vote;
 
 public class Vote {
 
+	public static final String COLUMN_NAME_ROOM_ID = "room_id";
+	public static final String COLUMN_NAME_VOTE_TYPE = "vote_type";
+	public static final String COLUMN_NAME_ID = "id";
+	public static final String COLUMN_NAME_TIMESTAMP = "timestamp";
+	
+	
 	private VoteType voteType;
 	private String id;
 	private String roomId;
