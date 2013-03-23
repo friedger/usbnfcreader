@@ -38,6 +38,25 @@ public class UsbCommunication implements Runnable {
 		}
 	}
 
+	private void inAutoPoll() throws IOException {
+		byte[] response = tranceiver.tranceive(new byte[] { (byte)0xd4, 0x60, 0x01, 0x01, 0x00 });
+		Log.d(Constants.TAG, "lengthIn: " + response.length);
+		Log.d(Constants.TAG, Utils.bufferToString(response));
+		int targets = response[2];
+		if (targets >= 1) {
+			int targetDataOffset = 4+5; 
+			Log.d("TAG", "Response: " + Utils.bufferToString(response));
+			byte nfcidLength = (byte)(response[targetDataOffset] & 0xff);
+			if (nfcidLength > 0) {
+			byte[] id = new byte[nfcidLength];
+			System.arraycopy(response, targetDataOffset+1, id, 0, nfcidLength);
+			Log.d("TAG", "ID: " + Utils.bufferToString(id));
+			if (tagListener != null)
+				tagListener.onTag(Utils.bufferToString(id));
+			}
+		}
+	}
+	
 	private void inDeselect() throws IOException {
 		tranceiver.tranceive(new byte[] { (byte)0xd4, 0x44, 0x01 });
 		// Log.d(TAG, "lengthIn: " + response.length);
@@ -61,7 +80,8 @@ public class UsbCommunication implements Runnable {
 			getFirmwareVersion();
 			while (!Thread.interrupted()) {
 				try {
-					inListPassiveTarget();
+//					inListPassiveTarget();
+						inAutoPoll();
 				}
 				catch (IOException e) {
 					if (e.getCause() != null && e.getCause() instanceof InterruptedException) {

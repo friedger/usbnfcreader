@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import android.util.Log;
-import de.friedger.android.usbnfcreader.Constants;
 import de.friedger.android.usbnfcreader.io.UsbCommunication;
 
 public class VoteManager {
@@ -47,7 +46,9 @@ public class VoteManager {
 	}
 
 	public void configureMachine(VotingMachine votingMachine, String id){
-		VoteType voteType = VoteType.byId(id);
+		Log.d(LOG_TAG, "Configure by ID:" + id);
+
+		VoteType voteType = MasterTags.identifyVoteTypeById(id);
 		
 		if (!votingMachines.containsKey(voteType)){
 			votingMachine.setVoteType(voteType);
@@ -72,8 +73,9 @@ public class VoteManager {
 		} else {
 			Log.d(LOG_TAG, "new vote: " + vote + " with ID: " + id);	
 		}
-		
-		if (VoteType.UNDEFINED.getId().equals(id)){
+
+		VoteType voteType = MasterTags.identifyVoteTypeById(id);
+		if (VoteType.UNDEFINED == voteType){
 			mStatus = STATUS_CONFIGURE;
 		}		
 		
